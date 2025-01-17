@@ -1,0 +1,14 @@
+# Web framework for building website backend
+flask==2.0.1
+
+# HTTP library for sending network requests 
+requests==2.26.0
+
+# HTML parsing library for parsing webpage content
+beautifulsoup4==4.9.3
+
+# Python interface for Google Translate API
+googletrans==3.1.0a0
+
+# For loading environment variables
+python-dotenv==0.19.0
