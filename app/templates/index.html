@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>医学文章搜索</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .search-container {
+            text-align: center;
+            margin-top: 100px;
+        }
+        .search-input {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .search-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <h1>医学文章搜索</h1>
+        <form method="POST">
+            <input type="text" name="keyword" class="search-input" placeholder="输入搜索关键词...">
+            <button type="submit" class="search-button">搜索</button>
+        </form>
+    </div>
+</body>
+</html>
