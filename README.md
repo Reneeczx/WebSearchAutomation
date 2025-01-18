@@ -17,14 +17,37 @@
 - Requests (HTTP请求)
 - Google Translate API (翻译功能)
 
-## 安装说明
+## Setup
 
-1. 克隆项目
-2. 安装依赖：
+1. Install Python dependencies:
 
 bash
 py -m pip install -r requirements.txt
 
+2. Install Chrome WebDriver:
+   - Check your Chrome version in Chrome menu -> Help -> About Google Chrome
+   - Download matching ChromeDriver from https://sites.google.com/chromium.org/driver/
+   - Add ChromeDriver to your system PATH or project directory
+
+3. Run the application:
+bash
+python run.py  
+
+
+The application will be available at http://127.0.0.1:5000
+
+## Features
+
+- Search Cancer Research UK's website
+- Display search results with titles, summaries, and links
+- Clean and simple interface
+
+## Requirements
+
+- Python 3.7+
+- Chrome browser
+- ChromeDriver
+- See requirements.txt for Python package dependencies
 
 ## 项目结构
 project/
@@ -51,3 +74,4 @@ project/
 - [ ] 实现内容提取
 - [ ] 添加结果筛选
 - [ ] 完善输出功能
+
