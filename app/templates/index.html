@@ -37,6 +37,8 @@
             padding: 20px;
             border: 1px solid #ddd;
             border-radius: 5px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .result-title {
             color: #e40068;
@@ -44,6 +46,7 @@
             font-size: 20px;
             margin-bottom: 10px;
             display: block;
+            font-weight: bold;
         }
         .result-title:hover {
             text-decoration: underline;
@@ -51,14 +54,24 @@
         .result-summary {
             color: #333;
             margin: 10px 0;
+            line-height: 1.5;
         }
-        .result-type {
+        .result-meta {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .result-type, .result-category {
             color: #666;
             font-size: 14px;
             background-color: #f5f5f5;
             padding: 5px 10px;
             border-radius: 3px;
             display: inline-block;
+        }
+        .result-category {
+            background-color: #e8f4f8;
         }
         .no-results {
             text-align: center;
@@ -68,27 +81,177 @@
     </style>
 </head>
 <body>
-    <div class="search-form">
-        <form method="POST">
-            <input type="text" name="keyword" class="search-input" value="{{ keyword }}" placeholder="Enter search term...">
-            <button type="submit" class="search-button">Search</button>
-        </form>
+    <div class="search-container">
+        <!-- 搜索框和站点选择 -->
+        <div class="search-form">
+            <input type="text" id="keyword" placeholder="输入搜索关键词...">
+            <div class="site-selector">
+                <!-- 动态生成站点复选框 -->
+            </div>
+            <button onclick="search()">搜索</button>
+        </div>
+        
+        <!-- 站点管理部分 -->
+        <div class="site-manager">
+            <h3>搜索站点管理</h3>
+            <button onclick="showAddSiteForm()">添加站点</button>
+            <div id="siteList">
+                <!-- 动态生成站点列表 -->
+            </div>
+        </div>
+        
+        <!-- 搜索结果显示 -->
+        <div id="searchResults">
+            <!-- 动态显示搜索结果 -->
+        </div>
     </div>
 
-    <div class="results">
-        {% if results %}
-            {% for result in results %}
-                <div class="result-item">
-                    <a href="{{ result.url }}" class="result-title" target="_blank">{{ result.title }}</a>
-                    <div class="result-summary">{{ result.summary }}</div>
-                    {% if result.type %}
-                        <span class="result-type">{{ result.type }}</span>
-                    {% endif %}
+    <script>
+    // 页面加载完成后加载站点列表
+    document.addEventListener('DOMContentLoaded', loadSites);
+
+    // 获取所有站点配置
+    async function loadSites() {
+        try {
+            const response = await fetch('/api/sites');
+            const sites = await response.json();
+            updateSiteList(sites);
+            updateSiteSelector(sites);
+        } catch (error) {
+            console.error('加载站点失败:', error);
+        }
+    }
+
+    // 更新站点列表显示
+    function updateSiteList(sites) {
+        const siteList = document.getElementById('siteList');
+        siteList.innerHTML = '';
+        
+        for (const [name, config] of Object.entries(sites)) {
+            const siteCard = document.createElement('div');
+            siteCard.className = 'card mb-3';
+            siteCard.innerHTML = `
+                <div class="card-body">
+                    <h5 class="card-title">${name}</h5>
+                    <p class="card-text">URL: ${config.url}</p>
+                    <p class="card-text">搜索路径: ${config.search_path}</p>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" 
+                            ${config.enabled ? 'checked' : ''} 
+                            onchange="updateSite('${name}', {enabled: this.checked})">
+                        <label class="form-check-label">启用</label>
+                    </div>
+                    <button class="btn btn-danger btn-sm" onclick="deleteSite('${name}')">删除</button>
                 </div>
-            {% endfor %}
-        {% elif keyword %}
-            <div class="no-results">No results found for "{{ keyword }}"</div>
-        {% endif %}
-    </div>
+            `;
+            siteList.appendChild(siteCard);
+        }
+    }
+
+    // 更新站点选择器
+    function updateSiteSelector(sites) {
+        const siteSelector = document.querySelector('.site-selector');
+        siteSelector.innerHTML = '';
+        
+        for (const [name, config] of Object.entries(sites)) {
+            if (config.enabled) {
+                const div = document.createElement('div');
+                div.className = 'form-check form-check-inline';
+                div.innerHTML = `
+                    <input class="form-check-input site-checkbox" type="checkbox" 
+                        value="${name}" id="site_${name}" checked>
+                    <label class="form-check-label" for="site_${name}">${name}</label>
+                `;
+                siteSelector.appendChild(div);
+            }
+        }
+    }
+
+    // 执行搜索
+    async function search() {
+        const keyword = document.getElementById('keyword').value;
+        if (!keyword.trim()) {
+            alert('请输入搜索关键词');
+            return;
+        }
+
+        const selectedSites = Array.from(document.querySelectorAll('.site-checkbox:checked'))
+            .map(cb => cb.value);
+        
+        if (selectedSites.length === 0) {
+            alert('请选择至少一个搜索站点');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('keyword', keyword);
+            selectedSites.forEach(site => formData.append('sites[]', site));
+            
+            const response = await fetch('/', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const results = await response.json();
+            if (results.error) {
+                alert(results.error);
+                return;
+            }
+            displayResults(results);
+        } catch (error) {
+            console.error('搜索失败:', error);
+            alert('搜索失败: ' + error.message);
+        }
+    }
+
+    // 显示搜索结果
+    function displayResults(results) {
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.innerHTML = '';
+        
+        for (const [site, siteResults] of Object.entries(results)) {
+            const siteSection = document.createElement('div');
+            siteSection.className = 'mb-4';
+            
+            const siteTitle = document.createElement('h4');
+            siteTitle.textContent = `${site} 的搜索结果`;
+            siteSection.appendChild(siteTitle);
+            
+            if (!siteResults || siteResults.length === 0) {
+                const noResults = document.createElement('p');
+                noResults.className = 'text-muted';
+                noResults.textContent = '未找到相关结果';
+                siteSection.appendChild(noResults);
+            } else {
+                siteResults.forEach(result => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    
+                    let metaHtml = '';
+                    if (result.type) {
+                        metaHtml += `<span class="result-type">${result.type}</span>`;
+                    }
+                    if (result.category) {
+                        metaHtml += `<span class="result-category">${result.category}</span>`;
+                    }
+                    
+                    resultItem.innerHTML = `
+                        <a href="${result.url}" class="result-title" target="_blank">
+                            ${result.title}
+                        </a>
+                        <p class="result-summary">${result.summary || '暂无描述'}</p>
+                        <div class="result-meta">
+                            ${metaHtml}
+                        </div>
+                    `;
+                    siteSection.appendChild(resultItem);
+                });
+            }
+            
+            resultsDiv.appendChild(siteSection);
+        }
+    }
+    </script>
 </body>
 </html>

@@ -1,0 +1,7 @@
+{
+    "cancer_uk": {
+        "url": "https://find.cancerresearchuk.org",
+        "search_path": "/",
+        "enabled": true
+    }
+} 
